@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="発注支援">
+<title>⚡ 発注支援システム</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, 'Helvetica Neue', sans-serif; background: #eef2f7; min-height: 100vh; padding-bottom: 40px; }
+button { font-family: inherit; }
+input, select { font-family: inherit; font-size: 16px; /* iPhoneズーム防止 */ }
+.header { padding: 14px 16px 0; transition: background 0.3s; }
+.header-inner { max-width: 800px; margin: 0 auto; }
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.tabs { display: flex; gap: 4px; }
+.tab-btn { border: none; border-radius: 8px 8px 0 0; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; background: transparent; color: rgba(255,255,255,0.7); }
+.tab-btn.active { background: #fff; }
+.main { max-width: 800px; margin: 0 auto; padding: 12px; }
+.card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+.sec-head { font-size: 14px; font-weight: 800; color: #1a3a5c; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e8edf5; }
+.inp { border: 1px solid #d1d5db; border-radius: 8px; padding: 10px; font-size: 16px; width: 100%; background: #fff; }
+.lbl { font-size: 11px; color: #6b7280; margin-bottom: 4px; display: block; font-weight: 600; }
+.fg { display: flex; flex-direction: column; flex: 1; min-width: 140px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { border: none; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; color: #fff; }
+.btn-ghost { background: transparent; color: #555; border: 1px solid #ccc; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.product-row { display: flex; align-items: center; gap: 8px; border-radius: 12px; padding: 10px 12px; border: 2px solid #e2e8f0; background: #f8fafc; transition: all 0.15s; margin-bottom: 8px; }
+.product-row.active { background: #e8f0fe; border-color: #1a56db; }
+.product-row.active-est { background: #f5f3ff; border-color: #7c3aed; }
+.product-info { flex: 1; min-width: 0; }
+.product-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.product-meta { font-size: 11px; color: #888; margin-top: 2px; }
+.counter { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.cnt-btn { width: 42px; height: 42px; border-radius: 50%; border: none; font-size: 24px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.cnt-minus { background: #e2e8f0; color: #bbb; }
+.cnt-minus.has { background: #fee2e2; color: #dc2626; }
+.cnt-plus { background: #1a56db; color: #fff; }
+.cnt-plus-est { background: #7c3aed; color: #fff; }
+.cnt-val { width: 38px; text-align: center; font-size: 22px; font-weight: 800; color: #ccc; }
+.cnt-val.active { color: #1a56db; }
+.cnt-val.active-est { color: #7c3aed; }
+.subtotal { width: 72px; text-align: right; font-size: 13px; font-weight: 700; color: #dde3ee; flex-shrink: 0; }
+.subtotal.active { color: #1a56db; }
+.subtotal.active-est { color: #7c3aed; }
+.set-btn { padding: 10px 18px; border-radius: 10px; border: 2px solid #d1d5db; background: #fff; color: #333; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+.set-btn.active { background: #1a56db; border-color: #1a56db; color: #fff; }
+.set-btn.active-est { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.tag { padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 13px; border: 1px solid #d1d5db; background: #f1f5f9; color: #555; display: inline-block; margin: 4px; user-select: none; transition: all 0.15s; }
+.tag.checked { background: #1a56db; color: #fff; border-color: #1a56db; font-weight: 700; }
+.notice { background: #fef9c3; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px; color: #854d0e; }
+.doc-toggle { display: flex; border-radius: 10px; overflow: hidden; border: 2px solid #e2e8f0; }
+.doc-toggle button { padding: 10px 22px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; flex: 1; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { padding: 10px 6px; text-align: center; color: #fff; }
+td { padding: 8px 6px; border-bottom: 1px solid #e8edf5; font-size: 13px; }
+.preview-box { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
+.grand-box { border-radius: 8px; padding: 12px 20px; font-size: 18px; font-weight: 700; color: #fff; display: inline-block; }
+.old-warn { color: #dc2626; }
+.save-ok { color: #86efac; font-size: 12px; }
+.cart-badge { background: #f59e0b; color: #fff; border-radius: 20px; padding: 4px 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ========== データ管理 ==========
+const DB = {
+  get: (key) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch { return null; } },
+  set: (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+};
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+const DEFAULT_PRODUCTS = [
+  { id: 1, name: "CVケーブル 2mm", code: "CV-2", maker: "住友電工", unitPrice: 350, unit: "m", priceUpdated: today() },
+  { id: 2, name: "CVケーブル 5.5mm", code: "CV-5", maker: "住友電工", unitPrice: 820, unit: "m", priceUpdated: today() },
+  { id: 3, name: "EM-EEFケーブル 2C", code: "EMEEF-2C", maker: "フジクラ", unitPrice: 290, unit: "m", priceUpdated: today() },
+  { id: 4, name: "露出コンセント", code: "WK3001", maker: "パナソニック", unitPrice: 420, unit: "個", priceUpdated: today() },
+  { id: 5, name: "スイッチプレート", code: "WTC7001W", maker: "パナソニック", unitPrice: 180, unit: "個", priceUpdated: today() },
+  { id: 6, name: "20A ブレーカー", code: "BKW220", maker: "パナソニック", unitPrice: 1850, unit: "個", priceUpdated: today() },
+  { id: 7, name: "VVFケーブル 2C 1.6mm", code: "VVF-2C16", maker: "フジクラ", unitPrice: 210, unit: "m", priceUpdated: today() },
+];
+const DEFAULT_SUPPLIERS = [
+  { id: 1, name: "山田電材株式会社", tel: "03-1234-5678" },
+  { id: 2, name: "関西電工商事", tel: "06-9876-5432" },
+];
+const DEFAULT_SETS = [
+  { id: 1, name: "ケーブル類", productIds: [1,2,3,7] },
+  { id: 2, name: "配線器具", productIds: [4,5,6] },
+];
+
+// State
+let state = {
+  tab: "order",           // order | master | suppliers | preview
+  docType: "order",       // order | estimate
+  products: DB.get("products") || DEFAULT_PRODUCTS,
+  suppliers: DB.get("suppliers") || DEFAULT_SUPPLIERS,
+  sets: DB.get("sets") || DEFAULT_SETS,
+  myCompany: DB.get("myCompany") || "株式会社○○電気工事",
+  activeSetId: null,
+  counts: {},
+  order: { supplierId: "", date: today(), deliveryDate: "", memo: "" },
+  newProduct: { name: "", code: "", maker: "", unitPrice: "", unit: "個" },
+  editingProductId: null,
+  newSupplier: { name: "", tel: "" },
+  newSetName: "",
+  editingSetId: null,
+  saveFlash: false,
+};
+if (state.sets.length > 0) state.activeSetId = state.sets[0].id;
+
+function persist(key, val) {
+  DB.set(key, val);
+  state.saveFlash = true;
+  render();
+  setTimeout(() => { state.saveFlash = false; render(); }, 1500);
+}
+
+function isOld(d) {
+  if (!d) return false;
+  return (Date.now() - new Date(d).getTime()) > 90*24*60*60*1000;
+}
+
+const accent = () => state.docType === "estimate" ? "#7c3aed" : "#1a3a5c";
+const accentDark = () => state.docType === "estimate" ? "#5b21b6" : "#0f2744";
+const isEst = () => state.docType === "estimate";
+
+// ========== レンダリング ==========
+function render() {
+  const app = document.getElementById("app");
+  if (state.tab === "preview") { app.innerHTML = renderPreview(); }
+  else { app.innerHTML = renderMain(); }
+  bindEvents();
+}
+
+function renderHeader() {
+  const cartCount = Object.values(state.counts).reduce((a,b) => a+b, 0);
+  return `
+  <div class="header" style="background: linear-gradient(135deg, ${accent()} 0%, ${accentDark()} 100%)">
+    <div class="header-inner">
+      <div class="header-top">
+        <div>
+          <div style="font-size:17px;font-weight:700;color:#fff;letter-spacing:1px">⚡ 発注支援システム</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px">電気工事業向け</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${state.saveFlash ? '<span class="save-ok">✅ 保存しました</span>' : ""}
+          ${cartCount > 0 ? `<div class="cart-badge" onclick="goPreview()">📋 ${cartCount}点 選択中</div>` : ""}
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn ${state.tab==='order'?'active':''}" style="${state.tab==='order'?'color:'+accent():''}" onclick="setTab('order')">入力</button>
+        <button class="tab-btn ${state.tab==='master'?'active':''}" style="${state.tab==='master'?'color:'+accent():''}" onclick="setTab('master')">商品登録</button>
+        <button class="tab-btn ${state.tab==='suppliers'?'active':''}" style="${state.tab==='suppliers'?'color:'+accent():''}" onclick="setTab('suppliers')">仕入先</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderMain() {
+  return renderHeader() + `<div class="main">${
+    state.tab === "order" ? renderOrder() :
+    state.tab === "master" ? renderMaster() :
+    renderSuppliers()
+  }</div>`;
+}
+
+function renderOrder() {
+  const ac = accent();
+  const est = isEst();
+  const sets = state.sets;
+  const activeSet = sets.find(s => s.id === state.activeSetId);
+  const activeProducts = activeSet ? state.products.filter(p => activeSet.productIds.includes(p.id)) : [];
+  const totalItems = state.products.filter(p => (state.counts[p.id]||0) > 0);
+  const grandTotal = totalItems.reduce((s,p) => s + p.unitPrice*(state.counts[p.id]||0), 0);
+  const cartCount = Object.values(state.counts).reduce((a,b) => a+b, 0);
+  const sup = state.suppliers.find(s => s.id === Number(state.order.supplierId));
+
+  return `
+  <!-- 書類種別 -->
+  <div class="card" style="padding:14px 16px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="font-weight:700;font-size:14px;color:#444">書類種別：</div>
+      <div class="doc-toggle">
+        <button onclick="setDocType('order')" style="background:${!est?'#1a3a5c':'#fff'};color:${!est?'#fff':'#888'}">📦 発注書</button>
+        <button onclick="setDocType('estimate')" style="background:${est?'#7c3aed':'#fff'};color:${est?'#fff':'#888'}">📋 見積依頼書</button>
+      </div>
+      ${est?`<div style="font-size:12px;color:#7c3aed;font-weight:600">見積依頼モード</div>`:""}
+    </div>
+  </div>
+
+  <!-- 基本情報 -->
+  <div class="card">
+    <div class="sec-head">基本情報</div>
+    <div class="row">
+      <div class="fg"><label class="lbl">自社名</label><input class="inp" id="myCompany" value="${esc(state.myCompany)}" onchange="updateMyCompany(this.value)"></div>
+      <div class="fg">
+        <label class="lbl">${est?"見積依頼先":"発注先"}</label>
+        <select class="inp" id="supplierId" onchange="updateOrder('supplierId',this.value)">
+          <option value="">選択してください</option>
+          ${state.suppliers.map(s=>`<option value="${s.id}" ${state.order.supplierId==s.id?'selected':''}>${esc(s.name)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="fg"><label class="lbl">${est?"依頼日":"発注日"}</label><input class="inp" type="date" value="${state.order.date}" onchange="updateOrder('date',this.value)"></div>
+      <div class="fg">
+        <label class="lbl">${est?"回答希望期限":"希望納期"}</label>
+        <div style="display:flex;gap:6px">
+          <input class="inp" type="date" style="flex:1" value="${state.order.deliveryDate==='最短'?'':state.order.deliveryDate}" onchange="updateOrder('deliveryDate',this.value)">
+          <button class="btn" style="background:${state.order.deliveryDate==='最短'?'#f59e0b':'#64748b'};padding:10px;font-size:13px;white-space:nowrap" onclick="setSaitan()">最短</button>
+        </div>
+        ${state.order.deliveryDate==='最短'?`<div style="font-size:11px;color:#f59e0b;font-weight:700;margin-top:4px">「最短」指定中　<span style="cursor:pointer;text-decoration:underline;color:#888" onclick="clearDelivery()">クリア</span></div>`:""}
+      </div>
+      <div class="fg" style="flex:1 1 100%"><label class="lbl">備考</label><input class="inp" value="${esc(state.order.memo)}" placeholder="工事名・現場名など" onchange="updateOrder('memo',this.value)"></div>
+    </div>
+  </div>
+
+  <!-- セット切り替え -->
+  <div class="card">
+    <div class="sec-head">セット切り替え</div>
+    ${sets.length===0
+      ? '<div style="color:#aaa;font-size:13px">「商品登録」タブでセットを作成してください</div>'
+      : `<div style="display:flex;gap:8px;flex-wrap:wrap">${sets.map(s=>`
+          <button class="set-btn ${state.activeSetId===s.id?(est?'active-est':'active'):''}" onclick="setActiveSet(${s.id})">
+            ${esc(s.name)} <span style="opacity:0.7;font-size:11px">(${s.productIds.length}品)</span>
+          </button>`).join("")}</div>`
+    }
+  </div>
+
+  <!-- 商品一覧 -->
+  <div class="card">
+    <div class="sec-head">${activeSet?esc(activeSet.name):"商品一覧"}</div>
+    ${activeProducts.length===0
+      ? '<div style="text-align:center;padding:28px;color:#aaa;font-size:14px">このセットに商品が登録されていません</div>'
+      : activeProducts.map(p => {
+          const qty = state.counts[p.id]||0;
+          const active = qty > 0;
+          const old = isOld(p.priceUpdated);
+          return `
+          <div class="product-row ${active?(est?'active-est':'active'):''}">
+            <div class="product-info">
+              <div class="product-name" style="color:${active?ac:'#333'}">${esc(p.name)}</div>
+              <div class="product-meta">
+                ${p.code?`<span style="margin-right:6px">${esc(p.code)}</span>`:""}
+                ${p.maker?`<span style="margin-right:6px">${esc(p.maker)}</span>`:""}
+                <span style="color:${ac};font-weight:600">¥${p.unitPrice.toLocaleString()}/${esc(p.unit)}</span>
+                ${p.priceUpdated?`<span style="margin-left:6px;color:${old?'#dc2626':'#ccc'}">${old?"⚠️ ":""}更新:${p.priceUpdated}</span>`:""}
+              </div>
+            </div>
+            <div class="counter">
+              <button class="cnt-btn ${qty>0?'cnt-minus has':'cnt-minus'}" onclick="bump(${p.id},-1)" ${qty===0?'disabled':''}>−</button>
+              <div class="cnt-val ${active?(est?'active-est':'active'):''}">${qty}</div>
+              <button class="cnt-btn ${est?'cnt-plus-est':'cnt-plus'}" onclick="bump(${p.id},1)">＋</button>
+              <div class="subtotal ${active?(est?'active-est':'active'):''}">¥${(p.unitPrice*qty).toLocaleString()}</div>
+            </div>
+          </div>`;
+        }).join("")
+    }
+  </div>
+
+  <!-- 合計 -->
+  <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-size:13px;color:#888">選択中：${cartCount}点（全セット合計）</div>
+      <div style="font-size:22px;font-weight:800;color:${ac}">¥${grandTotal.toLocaleString()} <span style="font-size:13px;font-weight:400;color:#888">（税抜）</span></div>
+    </div>
+    <button class="btn" style="background:${ac};font-size:15px;padding:12px 28px;opacity:${cartCount===0?0.4:1}" ${cartCount===0?'disabled':''} onclick="goPreview()">
+      ${est?"📋 見積依頼書を作成":"📦 発注書を作成"}
+    </button>
+  </div>`;
+}
+
+function renderMaster() {
+  const ep = state.editingProductId ? state.products.find(p => p.id === state.editingProductId) : null;
+  const np = state.newProduct;
+  return `
+  <!-- 商品追加フォーム -->
+  <div class="card">
+    <div class="sec-head">${ep?"商品を編集":"商品を追加"}</div>
+    <div style="background:#f0f4ff;border-radius:10px;padding:14px">
+      <div class="row">
+        <div class="fg"><label class="lbl">商品名 *</label><input class="inp" id="np_name" value="${esc(np.name)}" placeholder="CVケーブル 2mm" oninput="updateNP('name',this.value)"></div>
+        <div class="fg"><label class="lbl">品番</label><input class="inp" id="np_code" value="${esc(np.code)}" placeholder="CV-2" oninput="updateNP('code',this.value)"></div>
+        <div class="fg"><label class="lbl">メーカー</label><input class="inp" id="np_maker" value="${esc(np.maker)}" placeholder="住友電工" oninput="updateNP('maker',this.value)"></div>
+        <div class="fg" style="max-width:140px">
+          <label class="lbl">単価（円）* <span style="color:#16a34a;font-size:10px">更新日を自動記録</span></label>
+          <input class="inp" type="number" id="np_price" value="${np.unitPrice}" placeholder="350" oninput="updateNP('unitPrice',this.value)">
+        </div>
+        <div class="fg" style="max-width:110px">
+          <label class="lbl">単位</label>
+          <select class="inp" id="np_unit" onchange="updateNP('unit',this.value)">
+            ${["個","本","m","巻","セット","枚","箱","袋"].map(u=>`<option ${np.unit===u?'selected':''}>${u}</option>`).join("")}
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <button class="btn" style="background:${ep?'#f59e0b':'#16a34a'}" onclick="saveProduct()">${ep?"💾 更新":"＋ 登録"}</button>
+          ${ep?`<button class="btn-ghost" onclick="cancelEdit()">キャンセル</button>`:""}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- セット管理 -->
+  <div class="card">
+    <div class="sec-head">セット管理</div>
+    ${state.sets.map(s => `
+    <div style="margin-bottom:10px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f0f4ff">
+        ${state.editingSetId===s.id
+          ? `<input class="inp" style="flex:1" id="setname_${s.id}" value="${esc(s.name)}" onblur="renameSet(${s.id},this.value)">`
+          : `<div style="flex:1;font-weight:700;font-size:15px;color:#1a3a5c">${esc(s.name)} <span style="font-weight:400;font-size:12px;color:#888">（${s.productIds.length}品）</span></div>`
+        }
+        <button class="btn-ghost" style="padding:5px 10px;font-size:12px" onclick="startRenameSet(${s.id})">✏️ 名前変更</button>
+        <button class="btn" style="background:#ef4444;padding:5px 10px;font-size:12px" onclick="deleteSet(${s.id})">削除</button>
+      </div>
+      <div style="padding:10px 14px">
+        ${state.products.length===0
+          ? '<div style="color:#aaa;font-size:13px">商品がまだ登録されていません</div>'
+          : state.products.map(p => {
+              const checked = s.productIds.includes(p.id);
+              return `<span class="tag ${checked?'checked':''}" onclick="toggleProductInSet(${s.id},${p.id})">${checked?"✓ ":""}${esc(p.name)}</span>`;
+            }).join("")
+        }
+      </div>
+    </div>`).join("")}
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input class="inp" id="newSetName" value="${esc(state.newSetName)}" placeholder="新しいセット名（例：照明器具）" oninput="state.newSetName=this.value" style="flex:1" onkeydown="if(event.key==='Enter')addSet()">
+      <button class="btn" style="background:#16a34a" onclick="addSet()">＋ セット追加</button>
+    </div>
+  </div>
+
+  <!-- 全商品一覧 -->
+  <div class="card">
+    <div class="sec-head">全商品一覧</div>
+    ${state.products.map(p => {
+      const old = isOld(p.priceUpdated);
+      return `
+      <div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border-radius:10px;padding:10px 12px;border:1px solid ${old?'#fca5a5':'#e2e8f0'};margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px">${esc(p.name)}</div>
+          <div style="font-size:12px;color:#888;margin-top:2px">
+            ${p.code?`<span style="margin-right:8px">品番: ${esc(p.code)}</span>`:""}
+            ${p.maker?`<span style="margin-right:8px">${esc(p.maker)}</span>`:""}
+            <span style="color:#1a56db;font-weight:600">¥${p.unitPrice.toLocaleString()}/${esc(p.unit)}</span>
+            ${p.priceUpdated?`<span style="margin-left:8px;color:${old?'#dc2626':'#aaa'}">${old?"⚠️ 要確認 ":""}更新:${p.priceUpdated}</span>`:""}
+          </div>
+        </div>
+        <button class="btn-ghost" style="padding:6px 12px;font-size:12px" onclick="startEdit(${p.id})">編集</button>
+        <button class="btn" style="background:#ef4444;padding:6px 12px;font-size:12px" onclick="deleteProduct(${p.id})">削除</button>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function renderSuppliers() {
+  return `
+  <div class="card">
+    <div class="sec-head">仕入先マスタ</div>
+    ${state.suppliers.map(s => `
+    <div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border-radius:10px;padding:10px 12px;border:1px solid #e2e8f0;margin-bottom:8px">
+      <div style="flex:1">
+        <div style="font-weight:700">${esc(s.name)}</div>
+        <div style="font-size:13px;color:#888">${esc(s.tel||"")}</div>
+      </div>
+      <button class="btn" style="background:#ef4444;padding:6px 12px;font-size:12px" onclick="deleteSupplier(${s.id})">削除</button>
+    </div>`).join("")}
+    <div style="background:#f0f4ff;border-radius:10px;padding:14px;margin-top:8px">
+      <div class="row">
+        <div class="fg"><label class="lbl">会社名 *</label><input class="inp" id="ns_name" value="${esc(state.newSupplier.name)}" placeholder="○○電材株式会社" oninput="state.newSupplier.name=this.value"></div>
+        <div class="fg"><label class="lbl">電話番号</label><input class="inp" id="ns_tel" value="${esc(state.newSupplier.tel)}" placeholder="03-0000-0000" oninput="state.newSupplier.tel=this.value"></div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn" style="background:#16a34a" onclick="addSupplier()">＋ 追加</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderPreview() {
+  const est = isEst();
+  const ac = accent();
+  const totalItems = state.products.filter(p => (state.counts[p.id]||0) > 0);
+  const grandTotal = totalItems.reduce((s,p) => s + p.unitPrice*(state.counts[p.id]||0), 0);
+  const sup = state.suppliers.find(s => s.id === Number(state.order.supplierId));
+  const title = est ? "見 積 依 頼 書" : "発　注　書";
+  const dateLabel = est ? "依頼日" : "発注日";
+  const dlLabel = est ? "回答期限" : "希望納期";
+
+  return `
+  <div style="background:#f8f9fa;min-height:100vh;padding:16px;font-family:-apple-system,sans-serif">
+    <div style="max-width:720px;margin:0 auto">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn-ghost" onclick="setTab('order')">← 戻る</button>
+        <button class="btn" style="background:#dc2626" onclick="resetAndBack()">🗑 数量リセット</button>
+      </div>
+      <div class="notice">
+        💡 <strong>iPhoneで保存するには：</strong>Chromeの場合は右上メニュー →「共有」→「印刷」→ ピンチアウトでPDF保存。またはスクリーンショットをご利用ください。
+      </div>
+      ${totalItems.length === 0
+        ? '<div style="text-align:center;padding:60px;color:#888;background:#fff;border-radius:12px">数量が入力されている商品がありません</div>'
+        : `<div class="preview-box">
+            <div style="background:${ac};border-radius:8px;padding:10px 20px;margin-bottom:24px;text-align:center">
+              <div style="color:#fff;font-size:22px;font-weight:800;letter-spacing:6px">${title}</div>
+              ${est?`<div style="color:rgba(255,255,255,0.7);font-size:11px;margin-top:4px">※ これは発注ではなく見積依頼です</div>`:""}
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+              <div>
+                <div style="font-size:17px;font-weight:700">${sup?esc(sup.name)+"　御中":"（宛先未選択）"}</div>
+                ${sup&&sup.tel?`<div style="font-size:13px;color:#666;margin-top:4px">TEL: ${esc(sup.tel)}</div>`:""}
+              </div>
+              <div style="text-align:right;font-size:13px;color:#444;line-height:2">
+                <div>${dateLabel}：${state.order.date}</div>
+                ${state.order.deliveryDate?`<div>${dlLabel}：${state.order.deliveryDate}</div>`:""}
+                <div style="font-weight:700;font-size:15px">${esc(state.myCompany)}</div>
+              </div>
+            </div>
+            <div style="overflow-x:auto">
+              <table>
+                <thead><tr style="background:${ac}">
+                  <th>品番</th><th>品名</th><th>メーカー</th><th>単位</th><th>数量</th><th>単価</th><th>金額</th>
+                </tr></thead>
+                <tbody>
+                  ${totalItems.map((p,i) => `
+                  <tr style="background:${i%2===0?(est?'#faf5ff':'#f7faff'):'#fff'}">
+                    <td>${esc(p.code||"")}</td>
+                    <td style="font-weight:600">${esc(p.name)}</td>
+                    <td>${esc(p.maker||"")}</td>
+                    <td style="text-align:center">${esc(p.unit)}</td>
+                    <td style="text-align:center;font-weight:700">${state.counts[p.id]}</td>
+                    <td style="text-align:right">¥${p.unitPrice.toLocaleString()}</td>
+                    <td style="text-align:right;font-weight:700">¥${(p.unitPrice*state.counts[p.id]).toLocaleString()}</td>
+                  </tr>`).join("")}
+                </tbody>
+              </table>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:16px">
+              <div class="grand-box" style="background:${ac}">
+                ${est?"合計参考金額":"合計金額"}　¥${grandTotal.toLocaleString()}　（税抜）
+              </div>
+            </div>
+            ${est?`<div style="margin-top:16px;padding:12px;background:#f5f3ff;border-radius:8px;font-size:13px;color:#6d28d9;font-weight:600">※ 上記金額は参考単価をもとにした概算です。正式な見積金額を期日までにご連絡ください。</div>`:""}
+            ${state.order.memo?`<div style="margin-top:14px;padding:14px;background:#f8fafc;border-radius:8px;font-size:13px"><span style="font-weight:700">備考：</span>${esc(state.order.memo)}</div>`:""}
+          </div>`
+      }
+    </div>
+  </div>`;
+}
+
+// ========== イベント ==========
+function bindEvents() {}
+
+function esc(str) {
+  return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function setTab(t) { state.tab = t; render(); }
+function goPreview() { state.tab = "preview"; render(); }
+function setDocType(t) { state.docType = t; render(); }
+function setActiveSet(id) { state.activeSetId = id; render(); }
+function bump(id, delta) { state.counts[id] = Math.max(0, (state.counts[id]||0) + delta); render(); }
+function setSaitan() { state.order.deliveryDate = "最短"; render(); }
+function clearDelivery() { state.order.deliveryDate = ""; render(); }
+function updateOrder(key, val) { state.order[key] = val; }
+function updateMyCompany(val) { state.myCompany = val; DB.set("myCompany", val); }
+function updateNP(key, val) { state.newProduct[key] = val; }
+function resetAndBack() { state.counts = {}; state.tab = "order"; render(); }
+
+function saveProduct() {
+  const np = state.newProduct;
+  if (!np.name || !np.unitPrice) return alert("商品名と単価は必須です");
+  if (state.editingProductId) {
+    state.products = state.products.map(p => p.id === state.editingProductId
+      ? { ...p, ...np, unitPrice: Number(np.unitPrice), priceUpdated: today() } : p);
+    state.editingProductId = null;
+  } else {
+    state.products.push({ id: Date.now(), ...np, unitPrice: Number(np.unitPrice), priceUpdated: today() });
+  }
+  state.newProduct = { name: "", code: "", maker: "", unitPrice: "", unit: "個" };
+  persist("products", state.products);
+}
+
+function startEdit(id) {
+  const p = state.products.find(x => x.id === id);
+  state.editingProductId = id;
+  state.newProduct = { name: p.name, code: p.code, maker: p.maker, unitPrice: String(p.unitPrice), unit: p.unit };
+  render();
+  window.scrollTo(0, 0);
+}
+
+function cancelEdit() {
+  state.editingProductId = null;
+  state.newProduct = { name: "", code: "", maker: "", unitPrice: "", unit: "個" };
+  render();
+}
+
+function deleteProduct(id) {
+  if (!confirm("この商品を削除しますか？")) return;
+  state.products = state.products.filter(p => p.id !== id);
+  state.sets = state.sets.map(s => ({ ...s, productIds: s.productIds.filter(pid => pid !== id) }));
+  delete state.counts[id];
+  persist("products", state.products);
+  DB.set("sets", state.sets);
+}
+
+function addSet() {
+  if (!state.newSetName.trim()) return;
+  const newSet = { id: Date.now(), name: state.newSetName.trim(), productIds: [] };
+  state.sets.push(newSet);
+  state.activeSetId = newSet.id;
+  state.newSetName = "";
+  persist("sets", state.sets);
+}
+
+function deleteSet(id) {
+  if (!confirm("このセットを削除しますか？")) return;
+  state.sets = state.sets.filter(s => s.id !== id);
+  if (state.activeSetId === id) state.activeSetId = state.sets[0]?.id ?? null;
+  persist("sets", state.sets);
+}
+
+function startRenameSet(id) { state.editingSetId = id; render(); setTimeout(() => { const el = document.getElementById("setname_"+id); if(el){el.focus();el.select();} }, 50); }
+
+function renameSet(id, name) {
+  state.sets = state.sets.map(s => s.id === id ? { ...s, name } : s);
+  state.editingSetId = null;
+  persist("sets", state.sets);
+}
+
+function toggleProductInSet(setId, productId) {
+  state.sets = state.sets.map(s => {
+    if (s.id !== setId) return s;
+    const has = s.productIds.includes(productId);
+    return { ...s, productIds: has ? s.productIds.filter(id => id !== productId) : [...s.productIds, productId] };
+  });
+  persist("sets", state.sets);
+}
+
+function addSupplier() {
+  const ns = state.newSupplier;
+  if (!ns.name) return alert("会社名を入力してください");
+  state.suppliers.push({ id: Date.now(), name: ns.name, tel: ns.tel });
+  state.newSupplier = { name: "", tel: "" };
+  persist("suppliers", state.suppliers);
+}
+
+function deleteSupplier(id) {
+  if (!confirm("この仕入先を削除しますか？")) return;
+  state.suppliers = state.suppliers.filter(s => s.id !== id);
+  persist("suppliers", state.suppliers);
+}
+
+// 初期描画
+render();
+</script>
+</body>
+</html>
