@@ -441,49 +441,68 @@ function renderPreview() {
 
   return `
   <!-- 発注書本体 -->
-  <div class="preview-page">
-    <div class="preview-inner">
-      <div style="background:${a};border-radius:8px;padding:10px 20px;margin-bottom:24px;text-align:center">
-        <div style="color:#fff;font-size:22px;font-weight:800;letter-spacing:6px">${title}</div>
-        ${e?`<div style="color:rgba(255,255,255,0.7);font-size:11px;margin-top:4px">※ これは発注ではなく見積依頼です</div>`:""}
+  <div style="font-family:-apple-system,'Helvetica Neue',sans-serif;background:#fff;min-height:100vh;padding:24px 20px;">
+    <div style="max-width:680px;margin:0 auto;">
+
+      <!-- タイトル：枠線で印刷でも確実に表示 -->
+      <div style="border:3px solid ${a};border-radius:6px;padding:12px 20px;margin-bottom:20px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;letter-spacing:6px;color:${a};">${title}</div>
+        ${e?`<div style="font-size:11px;color:#888;margin-top:4px;">※ これは発注ではなく見積依頼です</div>`:""}
       </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
-        <div>
-          <div style="font-size:17px;font-weight:700">${sup?esc(sup.name)+" 御中":"（宛先未選択）"}</div>
-          ${sup?.tel?`<div style="font-size:13px;color:#666;margin-top:4px">TEL: ${esc(sup.tel)}</div>`:""}
-        </div>
-        <div style="text-align:right;font-size:13px;color:#444;line-height:2">
-          <div>${e?"依頼日":"発注日"}：${S.order.date}</div>
-          ${S.order.deliveryDate?`<div>${e?"回答期限":"希望納期"}：${S.order.deliveryDate}</div>`:""}
-          <div style="font-weight:700;font-size:15px">${esc(S.myCompany)}</div>
-        </div>
-      </div>
+
+      <!-- 宛先・日付 -->
+      <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+        <tr>
+          <td style="width:55%;vertical-align:top;padding:0 12px 0 0;">
+            <div style="font-size:18px;font-weight:800;border-bottom:2px solid #333;padding-bottom:6px;margin-bottom:6px;">${sup?esc(sup.name)+" 御中":"（宛先未選択）"}</div>
+            ${sup?.tel?`<div style="font-size:13px;color:#555;">TEL: ${esc(sup.tel)}</div>`:""}
+          </td>
+          <td style="width:45%;vertical-align:top;text-align:right;font-size:13px;line-height:2;color:#444;">
+            <div>${e?"依頼日":"発注日"}：${S.order.date}</div>
+            ${S.order.deliveryDate?`<div>${e?"回答期限":"希望納期"}：${S.order.deliveryDate}</div>`:""}
+            <div style="font-weight:800;font-size:15px;color:#222;">${esc(S.myCompany)}</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- 明細テーブル -->
       ${totalItems.length===0
-        ? '<div style="text-align:center;padding:40px;color:#aaa">数量が入力されている商品がありません</div>'
-        : `<div style="overflow-x:auto">
-          <table>
-            <thead><tr style="background:${a}">
-              <th>品番</th><th>品名</th><th>メーカー</th><th>単位</th><th>数量</th><th>単価</th><th>金額</th>
-            </tr></thead>
+        ? '<div style="text-align:center;padding:40px;color:#aaa;">数量が入力されている商品がありません</div>'
+        : `<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px;">
+            <thead>
+              <tr style="border-top:2px solid ${a};border-bottom:2px solid ${a};">
+                <th style="padding:8px 6px;text-align:center;font-weight:800;color:${a};">品番</th>
+                <th style="padding:8px 6px;text-align:left;font-weight:800;color:${a};">品名</th>
+                <th style="padding:8px 6px;text-align:center;font-weight:800;color:${a};">メーカー</th>
+                <th style="padding:8px 6px;text-align:center;font-weight:800;color:${a};">単位</th>
+                <th style="padding:8px 6px;text-align:center;font-weight:800;color:${a};">数量</th>
+                <th style="padding:8px 6px;text-align:right;font-weight:800;color:${a};">単価</th>
+                <th style="padding:8px 6px;text-align:right;font-weight:800;color:${a};">金額</th>
+              </tr>
+            </thead>
             <tbody>
               ${totalItems.map((p,i)=>`
-              <tr style="background:${i%2===0?(e?'#faf5ff':'#f7faff'):'#fff'}">
-                <td>${esc(p.code||"")}</td>
-                <td style="font-weight:600">${esc(p.name)}</td>
-                <td>${esc(p.maker||"")}</td>
-                <td style="text-align:center">${esc(p.unit)}</td>
-                <td style="text-align:center;font-weight:700">${S.counts[p.id]}</td>
-                <td style="text-align:right">¥${p.unitPrice.toLocaleString()}</td>
-                <td style="text-align:right;font-weight:700">¥${(p.unitPrice*S.counts[p.id]).toLocaleString()}</td>
+              <tr style="border-bottom:1px solid #ddd;background:${i%2===0?'#f8f8f8':'#fff'};">
+                <td style="padding:8px 6px;text-align:center;">${esc(p.code||"")}</td>
+                <td style="padding:8px 6px;font-weight:600;">${esc(p.name)}</td>
+                <td style="padding:8px 6px;text-align:center;">${esc(p.maker||"")}</td>
+                <td style="padding:8px 6px;text-align:center;">${esc(p.unit)}</td>
+                <td style="padding:8px 6px;text-align:center;font-weight:700;">${S.counts[p.id]}</td>
+                <td style="padding:8px 6px;text-align:right;">¥${p.unitPrice.toLocaleString()}</td>
+                <td style="padding:8px 6px;text-align:right;font-weight:700;">¥${(p.unitPrice*S.counts[p.id]).toLocaleString()}</td>
               </tr>`).join("")}
             </tbody>
           </table>
-        </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:16px">
-          <div class="grand-box" style="background:${a}">${e?"合計参考金額":"合計金額"}　¥${grandTotal.toLocaleString()}　（税抜）</div>
-        </div>
-        ${e?`<div style="margin-top:16px;padding:12px;background:#f5f3ff;border-radius:8px;font-size:13px;color:#6d28d9;font-weight:600">※ 上記金額は参考単価をもとにした概算です。正式な見積金額を期日までにご連絡ください。</div>`:""}
-        ${S.order.memo?`<div style="margin-top:14px;padding:14px;background:#f8fafc;border-radius:8px;font-size:13px"><span style="font-weight:700">備考：</span>${esc(S.order.memo)}</div>`:""}`
+
+          <!-- 合計 -->
+          <div style="display:flex;justify-content:flex-end;">
+            <div style="border:2px solid ${a};border-radius:6px;padding:10px 20px;font-size:16px;font-weight:800;color:${a};">
+              ${e?"合計参考金額":"合計金額"}　¥${grandTotal.toLocaleString()}　（税抜）
+            </div>
+          </div>
+
+          ${e?`<div style="margin-top:16px;padding:12px;border:1px solid #c4b5fd;border-radius:6px;font-size:13px;color:#6d28d9;font-weight:600;">※ 上記金額は参考単価をもとにした概算です。正式な見積金額を期日までにご連絡ください。</div>`:""}
+          ${S.order.memo?`<div style="margin-top:14px;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:13px;"><span style="font-weight:700;">備考：</span>${esc(S.order.memo)}</div>`:""}`
       }
     </div>
   </div>`;
