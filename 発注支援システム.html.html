@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="発注支援">
+<title>⚡ 発注支援システム</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+body { font-family: -apple-system, 'Helvetica Neue', sans-serif; background: #eef2f7; min-height: 100vh; padding-bottom: 40px; }
+button, input, select { font-family: inherit; }
+input, select { font-size: 16px; }
+
+/* ヘッダー */
+.header { padding: 14px 16px 0; transition: background 0.3s; }
+.header-inner { max-width: 800px; margin: 0 auto; }
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.tabs { display: flex; gap: 4px; }
+.tab-btn { border: none; border-radius: 8px 8px 0 0; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; background: transparent; color: rgba(255,255,255,0.7); }
+.tab-btn.active { background: #fff; }
+
+/* メニュー */
+.menu-wrap { position: relative; }
+.menu-trigger { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.menu-dropdown { display: none; position: absolute; top: 110%; left: 0; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.18); min-width: 200px; z-index: 100; overflow: hidden; }
+.menu-dropdown.open { display: block; }
+.menu-item { display: block; width: 100%; text-align: left; padding: 14px 18px; font-size: 14px; font-weight: 600; background: none; border: none; cursor: pointer; color: #333; border-bottom: 1px solid #f0f0f0; }
+.menu-item:last-child { border-bottom: none; }
+.menu-item:hover { background: #f5f7ff; }
+.menu-item.danger { color: #dc2626; }
+
+/* レイアウト */
+.main { max-width: 800px; margin: 0 auto; padding: 12px; }
+.card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+.sec-head { font-size: 14px; font-weight: 800; color: #1a3a5c; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e8edf5; }
+.inp { border: 1px solid #d1d5db; border-radius: 8px; padding: 10px; font-size: 16px; width: 100%; background: #fff; }
+.lbl { font-size: 11px; color: #6b7280; margin-bottom: 4px; display: block; font-weight: 600; }
+.fg { display: flex; flex-direction: column; flex: 1; min-width: 140px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { border: none; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; color: #fff; }
+.btn-ghost { background: transparent; color: #555; border: 1px solid #ccc; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+/* 商品行 */
+.product-row { display: flex; align-items: center; gap: 8px; border-radius: 12px; padding: 10px 12px; border: 2px solid #e2e8f0; background: #f8fafc; transition: all 0.15s; margin-bottom: 8px; user-select: none; }
+.product-row.active { background: #e8f0fe; border-color: #1a56db; }
+.product-row.active-est { background: #f5f3ff; border-color: #7c3aed; }
+.product-row.pressing { opacity: 0.6; transform: scale(0.98); }
+.product-info { flex: 1; min-width: 0; }
+.product-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.product-meta { font-size: 11px; color: #888; margin-top: 2px; }
+.counter { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.cnt-plus { width: 42px; height: 42px; border-radius: 50%; border: none; font-size: 24px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+.cnt-val { width: 38px; text-align: center; font-size: 22px; font-weight: 800; color: #ccc; flex-shrink: 0; }
+.cnt-val.active { color: #1a56db; }
+.cnt-val.active-est { color: #7c3aed; }
+.subtotal { width: 72px; text-align: right; font-size: 13px; font-weight: 700; color: #dde3ee; flex-shrink: 0; }
+.subtotal.active { color: #1a56db; }
+.subtotal.active-est { color: #7c3aed; }
+.long-press-hint { font-size: 11px; color: #aaa; text-align: right; margin-bottom: 8px; }
+
+/* セット */
+.set-btn { padding: 10px 18px; border-radius: 10px; border: 2px solid #d1d5db; background: #fff; color: #333; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+.set-btn.active { background: #1a56db; border-color: #1a56db; color: #fff; }
+.set-btn.active-est { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+
+/* タグ */
+.tag { padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 13px; border: 1px solid #d1d5db; background: #f1f5f9; color: #555; display: inline-block; margin: 4px; user-select: none; transition: all 0.15s; }
+.tag.checked { background: #1a56db; color: #fff; border-color: #1a56db; font-weight: 700; }
+
+/* プレビュー（印刷用・ボタンなし） */
+.preview-page { font-family: -apple-system, 'Helvetica Neue', sans-serif; background: #fff; min-height: 100vh; padding: 24px 16px; }
+.preview-inner { max-width: 720px; margin: 0 auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { padding: 10px 6px; text-align: center; color: #fff; }
+td { padding: 8px 6px; border-bottom: 1px solid #e8edf5; font-size: 13px; }
+.grand-box { border-radius: 8px; padding: 12px 20px; font-size: 18px; font-weight: 700; color: #fff; display: inline-block; }
+
+/* doc-toggle */
+.doc-toggle { display: flex; border-radius: 10px; overflow: hidden; border: 2px solid #e2e8f0; }
+.doc-toggle button { padding: 10px 22px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; flex: 1; }
+
+/* misc */
+.save-ok { color: #86efac; font-size: 12px; }
+.cart-badge { background: #f59e0b; color: #fff; border-radius: 20px; padding: 4px 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:50; }
+.overlay.open { display:block; }
+@media print {
+  .no-print { display:none !important; }
+  body { background:#fff; padding:0; }
+  .preview-page { padding: 12px; }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ========== DB ==========
+const DB = {
+  get: (k) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+const today = () => new Date().toISOString().slice(0,10);
+function isOld(d) { return d ? (Date.now()-new Date(d).getTime()) > 90*24*60*60*1000 : false; }
+function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+// ========== デフォルトデータ ==========
+const DEF_PRODUCTS = [
+  {id:1,name:"CVケーブル 2mm",code:"CV-2",maker:"住友電工",unitPrice:350,unit:"m",priceUpdated:today()},
+  {id:2,name:"CVケーブル 5.5mm",code:"CV-5",maker:"住友電工",unitPrice:820,unit:"m",priceUpdated:today()},
+  {id:3,name:"EM-EEFケーブル 2C",code:"EMEEF-2C",maker:"フジクラ",unitPrice:290,unit:"m",priceUpdated:today()},
+  {id:4,name:"露出コンセント",code:"WK3001",maker:"パナソニック",unitPrice:420,unit:"個",priceUpdated:today()},
+  {id:5,name:"スイッチプレート",code:"WTC7001W",maker:"パナソニック",unitPrice:180,unit:"個",priceUpdated:today()},
+  {id:6,name:"20A ブレーカー",code:"BKW220",maker:"パナソニック",unitPrice:1850,unit:"個",priceUpdated:today()},
+  {id:7,name:"VVFケーブル 2C 1.6mm",code:"VVF-2C16",maker:"フジクラ",unitPrice:210,unit:"m",priceUpdated:today()},
+];
+const DEF_SUPPLIERS = [
+  {id:1,name:"山田電材株式会社",tel:"03-1234-5678",email:""},
+  {id:2,name:"関西電工商事",tel:"06-9876-5432",email:""},
+];
+const DEF_SETS = [
+  {id:1,name:"ケーブル類",productIds:[1,2,3,7]},
+  {id:2,name:"配線器具",productIds:[4,5,6]},
+];
+
+// ========== State ==========
+let S = {
+  tab: "order",
+  docType: "order",
+  products: DB.get("products") || DEF_PRODUCTS,
+  suppliers: DB.get("suppliers") || DEF_SUPPLIERS,
+  sets: DB.get("sets") || DEF_SETS,
+  myCompany: DB.get("myCompany") || "株式会社○○電気工事",
+  activeSetId: null,
+  counts: {},
+  order: {supplierId:"",date:today(),deliveryDate:"",memo:""},
+  np: {name:"",code:"",maker:"",unitPrice:"",unit:"個"},
+  editProdId: null,
+  ns: {name:"",tel:""},
+  newSetName: "",
+  editSetId: null,
+  saveFlash: false,
+  menuOpen: false,
+};
+if (S.sets.length > 0) S.activeSetId = S.sets[0].id;
+
+function persist(key, val) {
+  DB.set(key, val);
+  S.saveFlash = true;
+  render();
+  setTimeout(() => { S.saveFlash = false; render(); }, 1500);
+}
+
+const ac = () => S.docType==="estimate" ? "#7c3aed" : "#1a3a5c";
+const acDark = () => S.docType==="estimate" ? "#5b21b6" : "#0f2744";
+const est = () => S.docType==="estimate";
+
+// ========== 長押し管理 ==========
+let pressTimer = null;
+let pressingId = null;
+function startPress(id) {
+  pressingId = id;
+  const el = document.getElementById("prow_"+id);
+  if (el) el.classList.add("pressing");
+  pressTimer = setTimeout(() => {
+    bump(id, -1);
+    const el2 = document.getElementById("prow_"+id);
+    if (el2) el2.classList.remove("pressing");
+    pressingId = null;
+    pressTimer = null;
+  }, 500);
+}
+function endPress(id) {
+  if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  const el = document.getElementById("prow_"+id);
+  if (el) el.classList.remove("pressing");
+  pressingId = null;
+}
+
+// ========== レンダリング ==========
+function render() {
+  document.getElementById("app").innerHTML =
+    S.tab === "preview" ? renderPreview() : renderMain();
+  bindEvents();
+}
+
+function renderHeader() {
+  const cartCount = Object.values(S.counts).reduce((a,b)=>a+b,0);
+  return `
+  <div class="overlay ${S.menuOpen?'open':''}" onclick="closeMenu()"></div>
+  <div class="header" style="background:linear-gradient(135deg,${ac()} 0%,${acDark()} 100%)">
+    <div class="header-inner">
+      <div class="header-top">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="menu-wrap">
+            <button class="menu-trigger" onclick="toggleMenu(event)">☰ メニュー</button>
+            <div class="menu-dropdown ${S.menuOpen?'open':''}">
+              <button class="menu-item" onclick="doExport()">📤 データをエクスポート</button>
+              <button class="menu-item" onclick="document.getElementById('importFile').click()">📥 データをインポート</button>
+              <input type="file" id="importFile" accept=".json" style="display:none" onchange="doImport(event)">
+              <button class="menu-item danger" onclick="doReset()">🗑 数量をリセット</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:#fff;letter-spacing:1px">⚡ 発注支援</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${S.saveFlash ? '<span class="save-ok">✅ 保存</span>' : ""}
+          ${cartCount>0 ? `<div class="cart-badge" onclick="setTab('preview')">📋 ${cartCount}点</div>` : ""}
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn ${S.tab==='order'?'active':''}" style="${S.tab==='order'?'color:'+ac():''}" onclick="setTab('order')">入力</button>
+        <button class="tab-btn ${S.tab==='master'?'active':''}" style="${S.tab==='master'?'color:'+ac():''}" onclick="setTab('master')">商品登録</button>
+        <button class="tab-btn ${S.tab==='suppliers'?'active':''}" style="${S.tab==='suppliers'?'color:'+ac():''}" onclick="setTab('suppliers')">仕入先</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderMain() {
+  return renderHeader() + `<div class="main">${
+    S.tab==="order" ? renderOrder() :
+    S.tab==="master" ? renderMaster() :
+    renderSuppliers()
+  }</div>`;
+}
+
+function renderOrder() {
+  const a = ac(); const e = est();
+  const activeSet = S.sets.find(s=>s.id===S.activeSetId);
+  const activeProducts = activeSet ? S.products.filter(p=>activeSet.productIds.includes(p.id)) : [];
+  const totalItems = S.products.filter(p=>(S.counts[p.id]||0)>0);
+  const grandTotal = totalItems.reduce((s,p)=>s+p.unitPrice*(S.counts[p.id]||0),0);
+  const cartCount = Object.values(S.counts).reduce((a,b)=>a+b,0);
+
+  return `
+  <!-- 書類種別 -->
+  <div class="card" style="padding:14px 16px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="font-weight:700;font-size:14px;color:#444">書類種別：</div>
+      <div class="doc-toggle">
+        <button onclick="setDocType('order')" style="background:${!e?'#1a3a5c':'#fff'};color:${!e?'#fff':'#888'}">📦 発注書</button>
+        <button onclick="setDocType('estimate')" style="background:${e?'#7c3aed':'#fff'};color:${e?'#fff':'#888'}">📋 見積依頼書</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 基本情報 -->
+  <div class="card">
+    <div class="sec-head">基本情報</div>
+    <div class="row">
+      <div class="fg"><label class="lbl">自社名</label><input class="inp" value="${esc(S.myCompany)}" onchange="S.myCompany=this.value;DB.set('myCompany',this.value)"></div>
+      <div class="fg">
+        <label class="lbl">${e?"見積依頼先":"発注先"}</label>
+        <select class="inp" onchange="S.order.supplierId=this.value;render()">
+          <option value="">選択してください</option>
+          ${S.suppliers.map(s=>`<option value="${s.id}" ${S.order.supplierId==s.id?'selected':''}>${esc(s.name)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="fg"><label class="lbl">${e?"依頼日":"発注日"}</label><input class="inp" type="date" value="${S.order.date}" onchange="S.order.date=this.value"></div>
+      <div class="fg">
+        <label class="lbl">${e?"回答希望期限":"希望納期"}</label>
+        <div style="display:flex;gap:6px">
+          <input class="inp" type="date" style="flex:1" value="${S.order.deliveryDate==='最短'?'':S.order.deliveryDate}" onchange="S.order.deliveryDate=this.value;render()">
+          <button class="btn" style="background:${S.order.deliveryDate==='最短'?'#f59e0b':'#64748b'};padding:10px;font-size:13px;white-space:nowrap" onclick="S.order.deliveryDate='最短';render()">最短</button>
+        </div>
+        ${S.order.deliveryDate==='最短'?`<div style="font-size:11px;color:#f59e0b;font-weight:700;margin-top:4px">「最短」指定中 <span style="text-decoration:underline;color:#888;cursor:pointer" onclick="S.order.deliveryDate='';render()">クリア</span></div>`:""}
+      </div>
+      <div class="fg" style="flex:1 1 100%"><label class="lbl">備考</label><input class="inp" value="${esc(S.order.memo)}" placeholder="工事名・現場名など" onchange="S.order.memo=this.value"></div>
+    </div>
+  </div>
+
+  <!-- セット切り替え -->
+  <div class="card">
+    <div class="sec-head">セット切り替え</div>
+    ${S.sets.length===0
+      ? '<div style="color:#aaa;font-size:13px">「商品登録」タブでセットを作成してください</div>'
+      : `<div style="display:flex;gap:8px;flex-wrap:wrap">${S.sets.map(s=>`
+          <button class="set-btn ${S.activeSetId===s.id?(e?'active-est':'active'):''}" onclick="S.activeSetId=${s.id};render()">
+            ${esc(s.name)} <span style="opacity:0.7;font-size:11px">(${s.productIds.length}品)</span>
+          </button>`).join("")}</div>`}
+  </div>
+
+  <!-- 商品一覧 -->
+  <div class="card">
+    <div class="sec-head">${activeSet?esc(activeSet.name):"商品一覧"}</div>
+    <div class="long-press-hint">※ 商品名を長押しで数量を１つ減らせます</div>
+    ${activeProducts.length===0
+      ? '<div style="text-align:center;padding:28px;color:#aaa;font-size:14px">このセットに商品が登録されていません</div>'
+      : activeProducts.map(p=>{
+          const qty=S.counts[p.id]||0; const active=qty>0; const old=isOld(p.priceUpdated);
+          return `
+          <div class="product-row ${active?(e?'active-est':'active'):''}" id="prow_${p.id}"
+            ontouchstart="startPress(${p.id})" ontouchend="endPress(${p.id})" ontouchcancel="endPress(${p.id})"
+            onmousedown="startPress(${p.id})" onmouseup="endPress(${p.id})" onmouseleave="endPress(${p.id})">
+            <div class="product-info">
+              <div class="product-name" style="color:${active?a:'#333'}">${esc(p.name)}</div>
+              <div class="product-meta">
+                ${p.code?`<span style="margin-right:6px">${esc(p.code)}</span>`:""}
+                ${p.maker?`<span style="margin-right:6px">${esc(p.maker)}</span>`:""}
+                <span style="color:${a};font-weight:600">¥${p.unitPrice.toLocaleString()}/${esc(p.unit)}</span>
+                ${p.priceUpdated?`<span style="margin-left:6px;color:${old?'#dc2626':'#ccc'}">${old?"⚠️ ":""}更新:${p.priceUpdated}</span>`:""}
+              </div>
+            </div>
+            <div class="counter">
+              <div class="cnt-val ${active?(e?'active-est':'active'):''}">${qty}</div>
+              <button class="cnt-plus" style="background:${a}" onclick="bump(${p.id},1);event.stopPropagation()">＋</button>
+              <div class="subtotal ${active?(e?'active-est':'active'):''}">¥${(p.unitPrice*qty).toLocaleString()}</div>
+            </div>
+          </div>`;
+        }).join("")
+    }
+  </div>
+
+  <!-- 合計・発注書ボタン -->
+  <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-size:13px;color:#888">選択中：${cartCount}点（全セット合計）</div>
+      <div style="font-size:22px;font-weight:800;color:${a}">¥${grandTotal.toLocaleString()} <span style="font-size:13px;font-weight:400;color:#888">（税抜）</span></div>
+    </div>
+    <button class="btn" style="background:${a};font-size:15px;padding:12px 28px;opacity:${cartCount===0?0.4:1}" ${cartCount===0?'disabled':''} onclick="setTab('preview')">
+      ${e?"📋 見積依頼書":"📦 発注書"}プレビュー
+    </button>
+  </div>`;
+}
+
+function renderMaster() {
+  const ep = S.editProdId ? S.products.find(p=>p.id===S.editProdId) : null;
+  const np = S.np;
+  return `
+  <div class="card">
+    <div class="sec-head">${ep?"商品を編集":"商品を追加"}</div>
+    <div style="background:#f0f4ff;border-radius:10px;padding:14px">
+      <div class="row">
+        <div class="fg"><label class="lbl">商品名 *</label><input class="inp" value="${esc(np.name)}" placeholder="CVケーブル 2mm" oninput="S.np.name=this.value"></div>
+        <div class="fg"><label class="lbl">品番</label><input class="inp" value="${esc(np.code)}" placeholder="CV-2" oninput="S.np.code=this.value"></div>
+        <div class="fg"><label class="lbl">メーカー</label><input class="inp" value="${esc(np.maker)}" placeholder="住友電工" oninput="S.np.maker=this.value"></div>
+        <div class="fg" style="max-width:140px">
+          <label class="lbl">単価（円）* <span style="color:#16a34a;font-size:10px">更新日自動記録</span></label>
+          <input class="inp" type="number" value="${np.unitPrice}" placeholder="350" oninput="S.np.unitPrice=this.value">
+        </div>
+        <div class="fg" style="max-width:110px">
+          <label class="lbl">単位</label>
+          <select class="inp" onchange="S.np.unit=this.value">
+            ${["個","本","m","巻","セット","枚","箱","袋"].map(u=>`<option ${np.unit===u?'selected':''}>${u}</option>`).join("")}
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <button class="btn" style="background:${ep?'#f59e0b':'#16a34a'}" onclick="saveProduct()">${ep?"💾 更新":"＋ 登録"}</button>
+          ${ep?`<button class="btn-ghost" onclick="cancelEdit()">キャンセル</button>`:""}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-head">セット管理</div>
+    ${S.sets.map(s=>`
+    <div style="margin-bottom:10px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f0f4ff">
+        ${S.editSetId===s.id
+          ? `<input class="inp" style="flex:1" id="sn_${s.id}" value="${esc(s.name)}" onblur="renameSet(${s.id},this.value)">`
+          : `<div style="flex:1;font-weight:700;font-size:15px;color:#1a3a5c">${esc(s.name)} <span style="font-weight:400;font-size:12px;color:#888">（${s.productIds.length}品）</span></div>`}
+        <button class="btn-ghost" style="padding:5px 10px;font-size:12px" onclick="startRenameSet(${s.id})">✏️</button>
+        <button class="btn" style="background:#ef4444;padding:5px 10px;font-size:12px" onclick="deleteSet(${s.id})">削除</button>
+      </div>
+      <div style="padding:10px 14px">
+        ${S.products.length===0
+          ? '<div style="color:#aaa;font-size:13px">商品がまだ登録されていません</div>'
+          : S.products.map(p=>{
+              const chk=s.productIds.includes(p.id);
+              return `<span class="tag ${chk?'checked':''}" onclick="togglePIS(${s.id},${p.id})">${chk?"✓ ":""}${esc(p.name)}</span>`;
+            }).join("")}
+      </div>
+    </div>`).join("")}
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input class="inp" id="newSetName" value="${esc(S.newSetName)}" placeholder="新しいセット名（例：照明器具）" oninput="S.newSetName=this.value" style="flex:1" onkeydown="if(event.key==='Enter')addSet()">
+      <button class="btn" style="background:#16a34a" onclick="addSet()">＋ 追加</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-head">全商品一覧</div>
+    ${S.products.map(p=>{
+      const old=isOld(p.priceUpdated);
+      return `
+      <div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border-radius:10px;padding:10px 12px;border:1px solid ${old?'#fca5a5':'#e2e8f0'};margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px">${esc(p.name)}</div>
+          <div style="font-size:12px;color:#888;margin-top:2px">
+            ${p.code?`品番:${esc(p.code)}　`:""}${p.maker?esc(p.maker)+"　":""}
+            <span style="color:#1a56db;font-weight:600">¥${p.unitPrice.toLocaleString()}/${esc(p.unit)}</span>
+            ${p.priceUpdated?`　<span style="color:${old?'#dc2626':'#aaa'}">${old?"⚠️ 要確認 ":""}更新:${p.priceUpdated}</span>`:""}
+          </div>
+        </div>
+        <button class="btn-ghost" style="padding:6px 12px;font-size:12px" onclick="startEdit(${p.id})">編集</button>
+        <button class="btn" style="background:#ef4444;padding:6px 12px;font-size:12px" onclick="deleteProd(${p.id})">削除</button>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function renderSuppliers() {
+  return `
+  <div class="card">
+    <div class="sec-head">仕入先マスタ</div>
+    ${S.suppliers.map(s=>`
+    <div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border-radius:10px;padding:10px 12px;border:1px solid #e2e8f0;margin-bottom:8px">
+      <div style="flex:1">
+        <div style="font-weight:700">${esc(s.name)}</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">
+          ${s.tel?`📞 ${esc(s.tel)}`:""}
+        </div>
+      </div>
+      <button class="btn" style="background:#ef4444;padding:6px 12px;font-size:12px" onclick="deleteSupplier(${s.id})">削除</button>
+    </div>`).join("")}
+    <div style="background:#f0f4ff;border-radius:10px;padding:14px;margin-top:8px">
+      <div class="row">
+        <div class="fg"><label class="lbl">会社名 *</label><input class="inp" id="ns_name" value="${esc(S.ns.name)}" placeholder="○○電材株式会社" oninput="S.ns.name=this.value"></div>
+        <div class="fg"><label class="lbl">電話番号</label><input class="inp" id="ns_tel" value="${esc(S.ns.tel)}" placeholder="03-0000-0000" oninput="S.ns.tel=this.value"></div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn" style="background:#16a34a" onclick="addSupplier()">＋ 追加</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ========== プレビュー（ボタンなし・印刷専用） ==========
+function renderPreview() {
+  const e = est(); const a = ac();
+  const totalItems = S.products.filter(p=>(S.counts[p.id]||0)>0);
+  const grandTotal = totalItems.reduce((s,p)=>s+p.unitPrice*(S.counts[p.id]||0),0);
+  const sup = S.suppliers.find(s=>s.id===Number(S.order.supplierId));
+  const title = e ? "見 積 依 頼 書" : "発　注　書";
+
+
+
+  return `
+  <!-- 発注書本体 -->
+  <div style="font-family:-apple-system,'Helvetica Neue',sans-serif;background:#fff;min-height:100vh;padding:24px 20px;">
+    <div style="max-width:680px;margin:0 auto;">
+
+      <!-- タイトル：枠線で印刷でも確実に表示 -->
+      <div style="border:3px solid ${a};border-radius:6px;padding:12px 20px;margin-bottom:20px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;letter-spacing:6px;color:${a};">${title}</div>
+        ${e?`<div style="font-size:11px;color:#888;margin-top:4px;">※ これは発注ではなく見積依頼です</div>`:""}
+      </div>
+
+      <!-- 宛先・日付 -->
+      <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+        <tr>
+          <td style="width:55%;vertical-align:top;padding:0 12px 0 0;">
+            <div style="font-size:18px;font-weight:800;border-bottom:2px solid #333;padding-bottom:6px;margin-bottom:6px;">${sup?esc(sup.name)+" 御中":"（宛先未選択）"}</div>
+            ${sup?.tel?`<div style="font-size:13px;color:#555;">TEL: ${esc(sup.tel)}</div>`:""}
+          </td>
+          <td style="width:45%;vertical-align:top;text-align:right;font-size:13px;line-height:2;color:#444;">
+            <div>${e?"依頼日":"発注日"}：${S.order.date}</div>
+            ${S.order.deliveryDate?`<div>${e?"回答期限":"希望納期"}：${S.order.deliveryDate}</div>`:""}
+            <div style="font-weight:800;font-size:15px;color:#222;">${esc(S.myCompany)}</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- 明細テーブル -->
+      ${totalItems.length===0
+        ? '<div style="text-align:center;padding:40px;color:#aaa;">数量が入力されている商品がありません</div>'
+        : `<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px;">
+            <thead>
+              <tr style="border-top:2px solid ${a};border-bottom:2px solid ${a};">
+                <th style="padding:8px 6px;text-align:center;font-weight:800;color:${a};">品番</th>
+                <th style="padding:8px 6px;text-align:left;font-weight:800;color:${a};">品名</th>
+                <th style="padding:8px 6px;text-align:center;font-weight:800;color:${a};">メーカー</th>
+                <th style="padding:8px 6px;text-align:center;font-weight:800;color:${a};">単位</th>
+                <th style="padding:8px 6px;text-align:center;font-weight:800;color:${a};">数量</th>
+                <th style="padding:8px 6px;text-align:right;font-weight:800;color:${a};">単価</th>
+                <th style="padding:8px 6px;text-align:right;font-weight:800;color:${a};">金額</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${totalItems.map((p,i)=>`
+              <tr style="border-bottom:1px solid #ddd;background:${i%2===0?'#f8f8f8':'#fff'};">
+                <td style="padding:8px 6px;text-align:center;">${esc(p.code||"")}</td>
+                <td style="padding:8px 6px;font-weight:600;">${esc(p.name)}</td>
+                <td style="padding:8px 6px;text-align:center;">${esc(p.maker||"")}</td>
+                <td style="padding:8px 6px;text-align:center;">${esc(p.unit)}</td>
+                <td style="padding:8px 6px;text-align:center;font-weight:700;">${S.counts[p.id]}</td>
+                <td style="padding:8px 6px;text-align:right;">¥${p.unitPrice.toLocaleString()}</td>
+                <td style="padding:8px 6px;text-align:right;font-weight:700;">¥${(p.unitPrice*S.counts[p.id]).toLocaleString()}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+
+          <!-- 合計 -->
+          <div style="display:flex;justify-content:flex-end;">
+            <div style="border:2px solid ${a};border-radius:6px;padding:10px 20px;font-size:16px;font-weight:800;color:${a};">
+              ${e?"合計参考金額":"合計金額"}　¥${grandTotal.toLocaleString()}　（税抜）
+            </div>
+          </div>
+
+          ${e?`<div style="margin-top:16px;padding:12px;border:1px solid #c4b5fd;border-radius:6px;font-size:13px;color:#6d28d9;font-weight:600;">※ 上記金額は参考単価をもとにした概算です。正式な見積金額を期日までにご連絡ください。</div>`:""}
+          ${S.order.memo?`<div style="margin-top:14px;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:13px;"><span style="font-weight:700;">備考：</span>${esc(S.order.memo)}</div>`:""}`
+      }
+    </div>
+  </div>`;
+}
+
+// ========== アクション ==========
+function bindEvents() {}
+function setTab(t) {
+  if (t === 'preview') {
+    const win = window.open('', '_blank');
+    win.document.write(renderPreview());
+    win.document.close();
+    return;
+  }
+  S.tab=t; S.menuOpen=false; render();
+}
+function setDocType(t) { S.docType=t; render(); }
+function toggleMenu(e) { e.stopPropagation(); S.menuOpen=!S.menuOpen; render(); }
+function closeMenu() { S.menuOpen=false; render(); }
+
+function bump(id, delta) {
+  S.counts[id] = Math.max(0, (S.counts[id]||0)+delta);
+  render();
+}
+
+function doReset() {
+  if (!confirm("数量をリセットしますか？")) return;
+  S.counts={};
+  S.menuOpen=false;
+  render();
+}
+
+// エクスポート
+function doExport() {
+  S.menuOpen=false;
+  const data = { products:S.products, suppliers:S.suppliers, sets:S.sets, myCompany:S.myCompany, exportedAt:today() };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download=`発注支援データ_${today()}.json`; a.click();
+  URL.revokeObjectURL(url);
+  render();
+}
+
+// インポート
+function doImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!confirm(`データをインポートします。\n現在のデータは上書きされます。\nよろしいですか？`)) return;
+      if (data.products) { S.products=data.products; DB.set("products",data.products); }
+      if (data.suppliers) { S.suppliers=data.suppliers; DB.set("suppliers",S.suppliers); }
+      if (data.sets) { S.sets=data.sets; DB.set("sets",data.sets); }
+      if (data.myCompany) { S.myCompany=data.myCompany; DB.set("myCompany",data.myCompany); }
+      if (S.sets.length>0) S.activeSetId=S.sets[0].id;
+      S.menuOpen=false;
+      alert("インポート完了しました！");
+      render();
+    } catch { alert("ファイルの読み込みに失敗しました。"); }
+  };
+  reader.readAsText(file);
+}
+
+// 商品
+function saveProduct() {
+  const np=S.np;
+  if (!np.name||!np.unitPrice) return alert("商品名と単価は必須です");
+  if (S.editProdId) {
+    S.products=S.products.map(p=>p.id===S.editProdId?{...p,...np,unitPrice:Number(np.unitPrice),priceUpdated:today()}:p);
+    S.editProdId=null;
+  } else {
+    S.products.push({id:Date.now(),...np,unitPrice:Number(np.unitPrice),priceUpdated:today()});
+  }
+  S.np={name:"",code:"",maker:"",unitPrice:"",unit:"個"};
+  persist("products",S.products);
+}
+function startEdit(id) {
+  const p=S.products.find(x=>x.id===id);
+  S.editProdId=id;
+  S.np={name:p.name,code:p.code,maker:p.maker,unitPrice:String(p.unitPrice),unit:p.unit};
+  render(); window.scrollTo(0,0);
+}
+function cancelEdit() { S.editProdId=null; S.np={name:"",code:"",maker:"",unitPrice:"",unit:"個"}; render(); }
+function deleteProd(id) {
+  if (!confirm("この商品を削除しますか？")) return;
+  S.products=S.products.filter(p=>p.id!==id);
+  S.sets=S.sets.map(s=>({...s,productIds:s.productIds.filter(pid=>pid!==id)}));
+  delete S.counts[id];
+  persist("products",S.products); DB.set("sets",S.sets);
+}
+
+// セット
+function addSet() {
+  if (!S.newSetName.trim()) return;
+  const ns={id:Date.now(),name:S.newSetName.trim(),productIds:[]};
+  S.sets.push(ns); S.activeSetId=ns.id; S.newSetName="";
+  persist("sets",S.sets);
+}
+function deleteSet(id) {
+  if (!confirm("このセットを削除しますか？")) return;
+  S.sets=S.sets.filter(s=>s.id!==id);
+  if (S.activeSetId===id) S.activeSetId=S.sets[0]?.id??null;
+  persist("sets",S.sets);
+}
+function startRenameSet(id) { S.editSetId=id; render(); setTimeout(()=>{ const el=document.getElementById("sn_"+id); if(el){el.focus();el.select();} },50); }
+function renameSet(id,name) { S.sets=S.sets.map(s=>s.id===id?{...s,name}:s); S.editSetId=null; persist("sets",S.sets); }
+function togglePIS(setId,prodId) {
+  S.sets=S.sets.map(s=>{
+    if(s.id!==setId) return s;
+    const has=s.productIds.includes(prodId);
+    return {...s,productIds:has?s.productIds.filter(id=>id!==prodId):[...s.productIds,prodId]};
+  });
+  persist("sets",S.sets);
+}
+
+// 仕入先
+function addSupplier() {
+  if (!S.ns.name) return alert("会社名を入力してください");
+  S.suppliers.push({id:Date.now(),name:S.ns.name,tel:S.ns.tel});
+  S.ns={name:"",tel:""};
+  persist("suppliers",S.suppliers);
+}
+function deleteSupplier(id) {
+  if (!confirm("この仕入先を削除しますか？")) return;
+  S.suppliers=S.suppliers.filter(s=>s.id!==id);
+  persist("suppliers",S.suppliers);
+}
+
+render();
+</script>
+</body>
+</html>
